@@ -3,9 +3,9 @@ from asyncio import sleep
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.containers import Grid, VerticalGroup
+from textual.containers import Center, Grid, VerticalGroup
 from textual.reactive import reactive
-from textual.widgets import Button, Digits, Label
+from textual.widgets import Button, Digits, Static
 
 SIMON_LOGO = """\
 ▄▄▄ ▄ ▄▄▄▄▄ ▄▄▄ ▄▄▄
@@ -81,6 +81,10 @@ class SimonGame(App):
         padding: 1;
     }
 
+    #logo {
+        text-align: center;
+    }
+
     #score {
         text-style: bold;
         background: $surface-lighten-2;
@@ -100,8 +104,9 @@ class SimonGame(App):
                 yield ColorButton(color)
 
         with VerticalGroup(id="center-panel"):
-            yield Label(SIMON_LOGO)
-            yield Digits(id="score")
+            yield Static(SIMON_LOGO, id="logo")
+            with Center():
+                yield Digits(id="score")
 
     def on_mount(self) -> None:
         self.play_round()
