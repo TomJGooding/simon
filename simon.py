@@ -126,9 +126,18 @@ class SimonGame(App):
 
     @work(exclusive=True)
     async def flash_buttons(self) -> None:
+        self.disable_buttons(True)
+
         for button in self.flashed_buttons:
             await sleep(1)
             self.query_one(f"#{button}", ColorButton).flash()
+
+        self.disable_buttons(False)
+
+    def disable_buttons(self, value: bool) -> None:
+        color_buttons = self.query(ColorButton)
+        for button in color_buttons:
+            button.disabled = value
 
     def on_button_pressed(self, event: ColorButton.Pressed) -> None:
         button = event.button
