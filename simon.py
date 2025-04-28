@@ -17,6 +17,11 @@ COLORS = ["green", "red", "yellow", "blue"]
 
 
 class ColorButton(Button, can_focus=False, inherit_css=False):
+    # Workaround for a bug in Textual where double-clicking the button
+    # will select its text. I've submitted a pull request to fix this here:
+    # https://github.com/Textualize/textual/pull/5770
+    ALLOW_SELECT = False
+
     DEFAULT_CSS = """
     ColorButton {
         min-width: 24;
