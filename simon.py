@@ -3,8 +3,15 @@ from asyncio import sleep
 
 from textual import work
 from textual.app import App, ComposeResult
-from textual.containers import Grid
-from textual.widgets import Button
+from textual.containers import Grid, VerticalGroup
+from textual.reactive import reactive
+from textual.widgets import Button, Digits, Label
+
+SIMON_LOGO = """\
+▄▄▄ ▄ ▄▄▄▄▄ ▄▄▄ ▄▄▄
+█▄▄ █ █ █ █ █ █ █ █
+▄▄█ █ █ █ █ █▄█ █ █\
+"""
 
 COLORS = ["green", "red", "yellow", "blue"]
 
@@ -12,8 +19,8 @@ COLORS = ["green", "red", "yellow", "blue"]
 class ColorButton(Button, can_focus=False, inherit_css=False):
     DEFAULT_CSS = """
     ColorButton {
-        min-height: 8;
-        min-width: 16;
+        min-width: 24;
+        min-height: 12;
         background-tint: black 30%;
         text-style: bold;
         padding: 1 2;
@@ -43,8 +50,8 @@ class SimonGame(App):
     }
 
     #button-grid {
-        height: 16;
-        width: 32;
+        width: 48;
+        height: 24;
         grid-size: 2;
     }
 
@@ -65,17 +72,36 @@ class SimonGame(App):
             content-align: right bottom;
         }
     }
+
+    #center-panel {
+        layer: center-panel;
+        align: center middle;
+        width: 24;
+        height: 12;
+        padding: 1;
+    }
+
+    #score {
+        text-style: bold;
+        background: $surface-lighten-2;
+        width: 8;
+        padding: 0 1;
+        margin-top: 1;
+    }
     """
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.flashed_buttons: list[str] = []
-        self.pressed_buttons: list[str] = []
+    flashed_buttons: list[str] = []
+    pressed_buttons: list[str] = []
+    score: reactive[int] = reactive(0)
 
     def compose(self) -> ComposeResult:
         with Grid(id="button-grid"):
             for color in COLORS:
                 yield ColorButton(color)
+
+        with VerticalGroup(id="center-panel"):
+            yield Label(SIMON_LOGO)
+            yield Digits(id="score")
 
     def on_mount(self) -> None:
         self.play_round()
@@ -106,9 +132,14 @@ class SimonGame(App):
 
         if len(self.pressed_buttons) == len(self.flashed_buttons):
             if self.pressed_buttons == self.flashed_buttons:
+                self.score += 1
                 self.notify("You win!")
             else:
+                self.score = 0
                 self.notify("You lose!", severity="error")
+
+    def watch_score(self) -> None:
+        self.query_one("#score", Digits).update(f"{self.score:02}")
 
     def action_press_button(self, color: str) -> None:
         button = self.query_one(f"#{color}-btn", Button)
