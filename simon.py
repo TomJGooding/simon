@@ -113,12 +113,12 @@ class SimonGame(App):
 
     def new_game(self) -> None:
         self.score = 0
-        self.flashed_buttons = []
+        self.flashed_buttons.clear()
 
         self.play_round()
 
     def play_round(self) -> None:
-        self.pressed_buttons = []
+        self.pressed_buttons.clear()
 
         self.increase_sequence()
         self.flash_buttons()
