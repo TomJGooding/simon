@@ -109,20 +109,25 @@ class SimonGame(App):
                 yield Digits(id="score")
 
     def on_mount(self) -> None:
+        self.new_game()
+
+    def new_game(self) -> None:
+        self.score = 0
+        self.flashed_buttons = []
+
         self.play_round()
 
     def play_round(self) -> None:
-        # TODO: Add a new color to the sequence each round
-        self.random_sequence()
+        self.pressed_buttons = []
 
+        self.increase_sequence()
         self.flash_buttons()
 
-    def random_sequence(self) -> None:
+    def increase_sequence(self) -> None:
         color_buttons = self.query(ColorButton)
-        for _ in range(4):
-            random_button = random.choice(color_buttons)
-            assert random_button.id is not None
-            self.flashed_buttons.append(random_button.id)
+        random_button = random.choice(color_buttons)
+        assert random_button.id is not None
+        self.flashed_buttons.append(random_button.id)
 
     @work(exclusive=True)
     async def flash_buttons(self) -> None:
@@ -139,18 +144,22 @@ class SimonGame(App):
         for button in color_buttons:
             button.disabled = value
 
+    def check_answer(self) -> None:
+        if len(self.pressed_buttons) != len(self.flashed_buttons):
+            return
+        if self.pressed_buttons == self.flashed_buttons:
+            self.score += 1
+            self.play_round()
+        else:
+            self.bell()
+            self.new_game()
+
     def on_button_pressed(self, event: ColorButton.Pressed) -> None:
         button = event.button
         assert button.id is not None
         self.pressed_buttons.append(button.id)
 
-        if len(self.pressed_buttons) == len(self.flashed_buttons):
-            if self.pressed_buttons == self.flashed_buttons:
-                self.score += 1
-                self.notify("You win!")
-            else:
-                self.score = 0
-                self.notify("You lose!", severity="error")
+        self.check_answer()
 
     def watch_score(self) -> None:
         self.query_one("#score", Digits).update(f"{self.score:02}")
