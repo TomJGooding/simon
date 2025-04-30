@@ -100,7 +100,7 @@ class SimonGame(App):
     """
 
     flashed_buttons: list[str] = []
-    pressed_buttons: list[str] = []
+    buttons_matched: int = 0
     score: reactive[int] = reactive(0)
 
     def compose(self) -> ComposeResult:
@@ -123,10 +123,20 @@ class SimonGame(App):
         self.play_round()
 
     def play_round(self) -> None:
-        self.pressed_buttons.clear()
+        self.buttons_matched = 0
 
         self.increase_sequence()
         self.flash_buttons()
+
+    def on_button_pressed(self, event: ColorButton.Pressed) -> None:
+        if event.button.id == self.flashed_buttons[self.buttons_matched]:
+            self.buttons_matched += 1
+            if self.buttons_matched == len(self.flashed_buttons):
+                self.score += 1
+                self.play_round()
+        else:
+            self.bell()
+            self.new_game()
 
     def increase_sequence(self) -> None:
         color_buttons = self.query(ColorButton)
@@ -148,23 +158,6 @@ class SimonGame(App):
         color_buttons = self.query(ColorButton)
         for button in color_buttons:
             button.disabled = value
-
-    def check_answer(self) -> None:
-        if len(self.pressed_buttons) != len(self.flashed_buttons):
-            return
-        if self.pressed_buttons == self.flashed_buttons:
-            self.score += 1
-            self.play_round()
-        else:
-            self.bell()
-            self.new_game()
-
-    def on_button_pressed(self, event: ColorButton.Pressed) -> None:
-        button = event.button
-        assert button.id is not None
-        self.pressed_buttons.append(button.id)
-
-        self.check_answer()
 
     def watch_score(self) -> None:
         self.query_one("#score", Digits).update(f"{self.score:02}")
